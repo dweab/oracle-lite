@@ -11,7 +11,7 @@ const getData = async url => {
     try {
         const response = await fetch(url);
         const json = await response.json();
-        //console.log(json.market_data.current_price);
+        console.log(json.market_data.current_price);
         var pr = json.market_data.current_price;
         var ATOMIC_UNITS = 1000000000000;
         var pr_out = {"xAG":new Number(pr.xag * ATOMIC_UNITS).toFixed(0),

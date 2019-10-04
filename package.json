@@ -2,13 +2,14 @@
   "name": "oracle-lite",
   "version": "1.0.0",
   "description": "a lite oracle for testnet",
-  "main": "app.js",
+  "main": "src/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "mysql": "^2.17.1",
     "node-fetch": "^2.6.0"
   }
 }
