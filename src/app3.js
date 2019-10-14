@@ -66,9 +66,9 @@ const getData = async url => {
 	const db = initDb(dbConfig);
 	try {
 	    const resultInsert = await db.query(sql, values);
-	    sql = "UPDATE PricingRecord SET unused1=(SELECT AVG(xUSD) FROM PricingRecord ORDER BY PricingRecordPK DESC LIMIT 360), " +
-		"unused2=(SELECT AVG(xUSD) FROM PricingRecord ORDER BY PricingRecordPK DESC LIMIT 1080), " +
-		"unused3=(SELECT AVG(xUSD) FROM PricingRecord ORDER BY PricingRecordPK DESC LIMIT 2160) WHERE PricingRecordPK=?";
+	    sql = "UPDATE PricingRecord SET unused1=(SELECT AVG(xUSD) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 360) AS ma1), " +
+		"unused2=(SELECT AVG(xUSD) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 1080) AS ma2), " +
+		"unused3=(SELECT AVG(xUSD) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2160) AS ma3) WHERE PricingRecordPK=?";
 	    values = [resultInsert.insertId];
 	    const resultUpdate = await db.query(sql, values);
 	    console.log(" ... received (sig = " + pr_out.signature + ")");
