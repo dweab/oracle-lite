@@ -1,3 +1,5 @@
+const chainLink = require ("./chainlink");
+
 const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
@@ -6,6 +8,8 @@ const fetch = require('node-fetch');
 
 const hostname = '127.0.0.1';
 const port = 8080;
+
+chainLink.fetchLatestPrice();
 
 const getData = async url => {
     try {
