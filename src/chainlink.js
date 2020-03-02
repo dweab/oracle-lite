@@ -2,7 +2,8 @@ const Web3 = require('web3');
 
 
 //const rpcURL = 'https://main-rpc.linkpool.io/';
-const rpcURL = 'http://localhost:8545';
+//const rpcURL = 'http://localhost:8545';
+const rpcURL = 'https://ropsten.infura.io/v3/955437c1ed1b44f1a8b4328b787d7e84';
 
 const web3 = new Web3(rpcURL);
 
