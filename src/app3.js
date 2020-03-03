@@ -8,7 +8,7 @@ const util = require('util');
 const chainLink = require('./chainlink');
 
 const hostname = '0.0.0.0';
-const port = 8080;
+const port = 443;
 
 const dbConfig = {
     host: "localhost",
