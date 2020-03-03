@@ -10,6 +10,24 @@ const chainLink = require('./chainlink');
 const hostname = '0.0.0.0';
 const port = 8080;
 
+const emptyRecord = {"xAG":0,
+	"xAU":0,
+	"xAUD":0,
+	"xBTC":0,
+	"xCAD":0,
+	"xCHF":0,
+	"xCNY":0,
+	"xEUR":0,
+	"xGBP":0,
+	"xJPY":0,
+	"xNOK":0,
+	"xNZD":0,
+	"xUSD":0,
+	"MA1":0,
+	"MA2":0,
+	"MA3":0,
+	"signature":"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"};
+
 const dbConfig = {
     host: "localhost",
     user: "oracle",
@@ -32,28 +50,36 @@ function initDb( config ) {
 }
 
 
-const getData = async () => {
+module.exports.getData = async () => {
     try {
-	const xhvInUSD  = await chainLink.fetchLatestPrice();
+	const chainResponse  = await chainLink.fetchLatestPrice();
 
-	const ATOMIC_UNITS = Math.pow(10,4);
-	const pr_out = {"xAG":0,
-		      "xAU":0,
-		      "xAUD":0,
-		      "xBTC":0,
-		      "xCAD":0,
-		      "xCHF":0,
-		      "xCNY":0,
-		      "xEUR":0,
-		      "xGBP":0,
-		      "xJPY":0,
-		      "xNOK":0,
-		      "xNZD":0,
-		      "xUSD":new Number(xhvInUSD * ATOMIC_UNITS).toFixed(0),
-		      "MA1":0,
-		      "MA2":0,
-		      "MA3":0,
-		      "signature":"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"};
+	const validResponses = chainResponse
+		.filter( response => response.state === 'fullfilled' );
+
+
+
+	// we need usd record to calc other values
+	const xUSDRecord = validResponses.find( chainRecord => chainRecord.ticker === 'xUSD' );
+
+
+	const priceRecords = validResponses.reduce( (acc, chainRecord)=> {
+
+		if (chainRecord.ticker === "xUSD") {
+			acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
+		}
+		else {
+			acc[chainRecord.ticker] = parseInt(( xUSDRecord.value / chainRecord.value) * Math.pow(10,12));
+		}
+
+		return acc;
+
+	}, {});
+
+
+	const pr_out = {...emptyRecord, ...priceRecords};
+
+
 	pr_out.signature = crypto.createHash("sha256").update(JSON.stringify(pr_out)).digest("hex");
 
 	// Store the record in the DB
@@ -83,12 +109,8 @@ const getData = async () => {
     }	
 };
 
-const https_options = {
-    key: fs.readFileSync("key.pem"),
-    cert: fs.readFileSync("cert.pem")
-};
 
-const server = https.createServer(https_options, (req, res) => {
+const server = http.createServer({}, (req, res) => {
 
     let objResponse;
 
