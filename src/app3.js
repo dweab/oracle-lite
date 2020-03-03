@@ -50,7 +50,7 @@ function initDb( config ) {
 }
 
 
-module.exports.getData = async () => {
+getData = async () => {
     try {
 	const chainResponse  = await chainLink.fetchLatestPrice();
 
