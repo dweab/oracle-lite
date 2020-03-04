@@ -109,8 +109,12 @@ getData = async () => {
     }	
 };
 
+const https_options = {
+	key: fs.readFileSync("key.pem"),
+	cert: fs.readFileSync("cert.pem")
+};
 
-const server = http.createServer({}, (req, res) => {
+const server = https.createServer(https_options, (req, res) => {
 
     let objResponse;
 
