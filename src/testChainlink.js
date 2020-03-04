@@ -1,12 +1,14 @@
 const chainLink = require('./chainlink');
+const app3 = require('./app3');
 
 
 
 
 
  setInterval( async () => {
- const price = await chainLink.fetchLatestPrice();
- console.log(price);
+ //let result = await app3.getData();
+  //console.log(result);
+
 }, 10000 );
 
 
