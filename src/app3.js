@@ -130,6 +130,12 @@ const server = https.createServer(https_options, (req, res) => {
 		delete result[0].Timestamp;
 		delete result[0].UT;
 		objResponse = {"pr":result[0]};
+		// HERE BE DRAGONS!!!
+		// NEAC: Truncate the MAs to 6 decimal places for USD
+		objResponse.pr.unused1 -= (objResponse.pr.unused1 % 1000000);
+		objResponse.pr.unused2 -= (objResponse.pr.unused2 % 1000000);
+		objResponse.pr.unused3 -= (objResponse.pr.unused3 % 1000000);
+		// LAND AHOY!!!
 		res.writeHead(200, "Content-Type: application/json");
 		res.write(JSON.stringify(objResponse));
 		console.log(JSON.stringify(objResponse));
