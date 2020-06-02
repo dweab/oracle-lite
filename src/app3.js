@@ -79,7 +79,6 @@ getData = async () => {
 
 	const pr_out = {...emptyRecord, ...priceRecords};
 
-
 	pr_out.signature = crypto.createHash("sha256").update(JSON.stringify(pr_out)).digest("hex");
 
 	// Store the record in the DB
@@ -90,9 +89,9 @@ getData = async () => {
 	const db = initDb(dbConfig);
 	try {
 	    const resultInsert = await db.query(sql, values);
-	    sql = "UPDATE PricingRecord SET unused1=(SELECT AVG(xUSD) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 360) AS ma1), " +
-		"unused2=(SELECT AVG(xUSD) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 1080) AS ma2), " +
-		"unused3=(SELECT AVG(xUSD) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2160) AS ma3) WHERE PricingRecordPK=?";
+	    sql = "UPDATE PricingRecord SET unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 720) AS ma1), " +
+		"unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 1080) AS ma2), " +
+		"unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2160) AS ma3) WHERE PricingRecordPK=?";
 	    values = [resultInsert.insertId];
 	    const resultUpdate = await db.query(sql, values);
 	    console.log(" ... received (sig = " + pr_out.signature + ")");
@@ -130,12 +129,6 @@ const server = https.createServer(https_options, (req, res) => {
 		delete result[0].Timestamp;
 		delete result[0].UT;
 		objResponse = {"pr":result[0]};
-		// HERE BE DRAGONS!!!
-		// NEAC: Truncate the MAs to 6 decimal places for USD
-		objResponse.pr.unused1 -= (objResponse.pr.unused1 % 1000000);
-		objResponse.pr.unused2 -= (objResponse.pr.unused2 % 1000000);
-		objResponse.pr.unused3 -= (objResponse.pr.unused3 % 1000000);
-		// LAND AHOY!!!
 		res.writeHead(200, "Content-Type: application/json");
 		res.write(JSON.stringify(objResponse));
 		console.log(JSON.stringify(objResponse));
@@ -151,19 +144,6 @@ const server = https.createServer(https_options, (req, res) => {
 	db.close();
 	return;
     }
-    /*
-	    if (json.status == "ok") {
-		res.writeHead(200, "Content-Type: application/json");
-		res.write(JSON.stringify(json.response));
-		res.end();
-		console.log(JSON.stringify(json.response));
-	    } else {
-		res.writeHead(404, "Content-Type: text/plain");
-		res.write(json.response);
-		res.end();
-	    }
-	});
-    */
 });
 
 server.listen(port, hostname, () => {
