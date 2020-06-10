@@ -155,30 +155,35 @@ function verify(message, public_key, signature) {
 }
 
 
-const getData = async url => {
+getData = async () => {
     try {
-	const response = await fetch(url);
-	const json = await response.json();
-	//console.log(json.market_data.current_price);
-	var pr = json.market_data.current_price;
-	var ATOMIC_UNITS = 1000000000000;
-	var pr_out = {"xAG":new Number(pr.xag * ATOMIC_UNITS).toFixed(0),
-		      "xAU":new Number(pr.xau * ATOMIC_UNITS).toFixed(0),
-		      "xAUD":new Number(pr.aud * ATOMIC_UNITS).toFixed(0),
-		      "xBTC":new Number(pr.btc * ATOMIC_UNITS).toFixed(0),
-		      "xCAD":new Number(pr.cad * ATOMIC_UNITS).toFixed(0),
-		      "xCHF":new Number(pr.chf * ATOMIC_UNITS).toFixed(0),
-		      "xCNY":new Number(pr.cny * ATOMIC_UNITS).toFixed(0),
-		      "xEUR":new Number(pr.eur * ATOMIC_UNITS).toFixed(0),
-		      "xGBP":new Number(pr.gbp * ATOMIC_UNITS).toFixed(0),
-		      "xJPY":new Number(pr.jpy * ATOMIC_UNITS).toFixed(0),
-		      "xNOK":new Number(pr.nok * ATOMIC_UNITS).toFixed(0),
-		      "xNZD":new Number(pr.nzd * ATOMIC_UNITS).toFixed(0),
-		      "xUSD":new Number(pr.usd * ATOMIC_UNITS).toFixed(0),
-		      "MA1":0,
-		      "MA2":0,
-		      "MA3":0,
-		      "signature":"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"};
+	const chainResponse  = await chainLink.fetchLatestPrice();
+
+	const validResponses = chainResponse
+		.filter( response => response.state === 'fullfilled' );
+
+
+
+	// we need usd record to calc other values
+	const xUSDRecord = validResponses.find( chainRecord => chainRecord.ticker === 'xUSD' );
+
+
+	const priceRecords = validResponses.reduce( (acc, chainRecord)=> {
+
+		if (chainRecord.ticker === "xUSD") {
+			acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
+		}
+		else {
+			acc[chainRecord.ticker] = parseInt(( xUSDRecord.value / chainRecord.value) * Math.pow(10,12));
+		}
+
+		return acc;
+
+	}, {});
+
+
+	const pr_out = {...emptyRecord, ...priceRecords};
+
 	pr_out.signature = signature_to_rs(sign(JSON.stringify(pr_out), private_key));
 
 	// Store the record in the DB
@@ -251,7 +256,7 @@ const private_key = fs.readFileSync("certs/ec_private.pem");
 server.listen(port, hostname, () => {
 
     console.log(`Server running at https://${hostname}:${port}/`);
-    
+
     // Start a timer to collect the data from CoinGecko
     const interval = setInterval(function() {
 	// Get the pricing record data
