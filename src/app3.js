@@ -79,8 +79,6 @@ getData = async () => {
 
 	const pr_out = {...emptyRecord, ...priceRecords};
 
-      pr_out.signature = sig.getSignature(JSON.stringify(pr_out));
-
 	// Store the record in the DB
 	let sql = "INSERT INTO PricingRecord (xAG,xAU,xAUD,xBTC,xCAD,xCHF,xCNY,xEUR,xGBP,xJPY,xNOK,xNZD,xUSD,unused1,unused2,unused3,Signature) VALUES (?)";
 	let values = [[pr_out.xAG, pr_out.xAU, pr_out.xAUD, pr_out.xBTC, pr_out.xCAD, pr_out.xCHF, pr_out.xCNY,
@@ -88,13 +86,29 @@ getData = async () => {
 		       pr_out.MA1, pr_out.MA2, pr_out.MA3, pr_out.signature]];
 	const db = initDb(dbConfig);
 	try {
-	    const resultInsert = await db.query(sql, values);
-	    sql = "UPDATE PricingRecord SET unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 720) AS ma1), " +
-		"unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 1080) AS ma2), " +
-		"unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2160) AS ma3) WHERE PricingRecordPK=?";
-	    values = [resultInsert.insertId];
-	    const resultUpdate = await db.query(sql, values);
-	    console.log(" ... received (sig = " + pr_out.signature + ")");
+	  const resultInsert = await db.query(sql, values);
+	  sql = "UPDATE PricingRecord SET unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 720) AS ma1), " +
+	    "unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 1080) AS ma2), " +
+	    "unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2160) AS ma3) WHERE PricingRecordPK=?";
+	  values = [resultInsert.insertId];
+	  const resultUpdate = await db.query(sql, values);
+
+          // Now get the MA values
+	  var resultQuery = await db.query("SELECT * FROM PricingRecord WHERE PricingRecordPK=?", values);
+
+          // Erase the empty signature & (superfluous) timestamp
+          delete resultQuery[0].PricingRecordPK;
+          delete resultQuery[0].Signature;
+          delete resultQuery[0].Timestamp;
+
+          console.log("JSON='" + JSON.stringify(resultQuery[0]) + "'");
+          const signature = sig.getSignature(JSON.stringify(resultQuery[0]));
+	  console.log(" ... received (sig = " + signature + ")");
+
+          // Update the PR
+          values = [signature, resultInsert.insertId];
+          const resultUpdatePR = await db.query("UPDATE PricingRecord SET Signature=? WHERE PricingRecordPK=?", values);
+          
 	} catch(err) {
 	    // Something went wrong
 	    console.log(err);
