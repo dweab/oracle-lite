@@ -129,21 +129,6 @@ const https_options = {
 
 const server = https.createServer(https_options, (req, res) => {
 
-	const requestingOrigin = req.headers.origin;
-	const allowedOrigins = ["https://havenprotocol.org","https://vault.havenprotocol.org","http://localhost:3000"];
-
-	const allowedOrigin =  allowedOrigins.find( origin => origin === requestingOrigin);
-
-
-	if (allowedOrigin) {
-		res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-		res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-	}
-
-
-
-
-
     let objResponse;
 
     console.log(new Date().toUTCString() + " : " + req.connection.remoteAddress + " : requesting record...");
