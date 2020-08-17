@@ -9,8 +9,7 @@ const mainnetUrl = 'https://mainnet.infura.io/v3/955437c1ed1b44f1a8b4328b787d7e8
 const web3Test = new Web3(testnetUrl);
 const web3Main = new Web3(mainnetUrl);
 
-
-const xhvAddress = '0x0E08fc2Ffc6120eF39AF06ce1A25f55042EB4A37';
+const xhvAddress = '0xeccBeEd9691d8521385259AE596CF00D68429de0';
 const btcAddress = '0xF5fff180082d6017036B771bA883025c654BC935';
 const audAddress = '0x05cf62c4ba0ccea3da680f9a8744ac51116d6231';
 const eurAddress = '0x25Fa978ea1a7dc9bDc33a2959B9053EaE57169B5';
