@@ -104,8 +104,8 @@ getData = async () => {
 		  console.log("JSON='" + JSON.stringify(resultQuery[0]) + "'");
 		  
 		//TODO comment out for regular running
-		const signature = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-        // const signature = sig.getSignature(JSON.stringify(resultQuery[0]));
+		//const signature = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+        const signature = sig.getSignature(JSON.stringify(resultQuery[0]));
 	  
 		console.log(" ... received (sig = " + signature + ")");
 
