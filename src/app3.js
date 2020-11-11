@@ -101,9 +101,13 @@ getData = async () => {
           delete resultQuery[0].Signature;
           delete resultQuery[0].Timestamp;
 
-          console.log("JSON='" + JSON.stringify(resultQuery[0]) + "'");
-          const signature = sig.getSignature(JSON.stringify(resultQuery[0]));
-	  console.log(" ... received (sig = " + signature + ")");
+		  console.log("JSON='" + JSON.stringify(resultQuery[0]) + "'");
+		  
+		//TODO comment out for regular running
+		const signature = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+        // const signature = sig.getSignature(JSON.stringify(resultQuery[0]));
+	  
+		console.log(" ... received (sig = " + signature + ")");
 
           // Update the PR
           values = [signature, resultInsert.insertId];
