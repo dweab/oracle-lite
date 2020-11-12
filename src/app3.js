@@ -50,18 +50,31 @@ function initDb( config ) {
     };
 }
 
+isValidPriceRecord = (priceRecord) => {
+		
+		if (!priceRecord || !priceRecord.value || isNaN(priceRecord.value) || isNaN(parseFloat(priceRecord.value))) {
+			return false;
+		}
+	return true	
+	} 
+
 
 getData = async () => {
     try {
 	const chainResponse  = await chainLink.fetchLatestPrice();
 
 	const validResponses = chainResponse
-		.filter( response => response.state === 'fullfilled' );
-
+		.filter(response => response.state === 'fullfilled');
+		
 
 
 	// we need usd record to calc other values
-	const xUSDRecord = validResponses.find( chainRecord => chainRecord.ticker === 'xUSD' );
+		const xUSDRecord = validResponses.find(chainRecord => chainRecord.ticker === 'xUSD');
+		
+	// if xUSD value is not present or not a valid value we cannot update oracles price records
+		if (!isValidPriceRecord(xUSDRecord)) {
+			return;
+	}
 
 
 	const priceRecords = validResponses.reduce( (acc, chainRecord)=> {
@@ -76,6 +89,9 @@ getData = async () => {
 		return acc;
 
 	}, {});
+		
+		
+
 
 
 	const pr_out = {...emptyRecord, ...priceRecords};
