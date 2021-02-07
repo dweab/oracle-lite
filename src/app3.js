@@ -74,12 +74,7 @@ getData = async () => {
 		}
 
 		const priceRecords = validResponses.reduce((acc, chainRecord)=> {
-			if (chainRecord.ticker === "xUSD") {
-				acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
-			}
-			else {
-				acc[chainRecord.ticker] = parseInt(chainRecord.value * Math.pow(10,12));
-			}
+			acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
 			return acc;
 		}, {});
 		
