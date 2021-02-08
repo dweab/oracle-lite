@@ -74,10 +74,10 @@ getData = async () => {
 		}
 
 		const priceRecords = validResponses.reduce((acc, chainRecord)=> {
-			acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
+			acc[chainRecord.ticker] = (chainRecord.value * Math.pow(10,4));
+			acc[chainRecord.ticker] -= acc[chainRecord.ticker] % Math.pow(10,8);
 			return acc;
 		}, {});
-		
 
 		const pr_out = {...emptyRecord, ...priceRecords};
 
