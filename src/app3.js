@@ -23,7 +23,7 @@ const emptyRecord = {
 	"xGBP":0,
 	"xJPY":0,
 	"xNOK":0,
-	"xDPI":0,
+	"xNZD":0,
 	"xUSD":0,
 	"MA1":0,
 	"MA2":0,
@@ -83,10 +83,12 @@ getData = async () => {
 		const priceRecords = validResponses.reduce((acc, chainRecord)=> {
 			if (chainRecord.ticker === 'xUSD') {
 				acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
-			} else if (chainRecord.ticker === 'xDPI') {
-				let val = chainRecord.value / Math.pow(10,10);
-				acc[chainRecord.ticker] = adjustPrice(val);
-			} else {
+			} 
+			// else if (chainRecord.ticker === 'xDPI') {
+			// 	let val = chainRecord.value / Math.pow(10,10);
+			// 	acc[chainRecord.ticker] = adjustPrice(val);
+			// } 
+			else {
 				acc[chainRecord.ticker] = adjustPrice(chainRecord.value);
 			}
 			return acc;

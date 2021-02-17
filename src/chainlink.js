@@ -47,7 +47,7 @@ const requestList = [
     {contract:xagContract, ticker:'xAG'},
     {contract:xauContract, ticker:'xAU'},
     {contract:cnyContract, ticker:'xCNY'},
-    {contract:dpiContract, ticker:'xDPI'}
+    // {contract:dpiContract, ticker:'xDPI'}
 ];
 
 module.exports.fetchLatestPrice = async () => {
