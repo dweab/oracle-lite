@@ -94,6 +94,16 @@ getData = async () => {
 			return acc;
 		}, {});
 
+		
+		// inactivate the all xAssets except xCNY, xEUR, xAU, xAG by setting the value to 0.
+		for (let key in priceRecords) {
+			if (priceRecords.hasOwnProperty(key)) {
+				if (key !== 'xCNY' && key !== 'xEUR' && key !== 'xAG' && key !== 'xAU' && key !== 'xUSD') {
+					priceRecords[key] = 0;
+				}
+			}
+		}
+
 		const pr_out = {...emptyRecord, ...priceRecords};
 
 		// Store the record in the DB
