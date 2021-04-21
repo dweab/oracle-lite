@@ -10,14 +10,14 @@ const web3Test = new Web3(testnetUrl);
 const web3Main = new Web3(mainnetUrl);
 
 const xhvAddress = '0xeccBeEd9691d8521385259AE596CF00D68429de0';
-const btcAddress = '0xF5fff180082d6017036B771bA883025c654BC935';
-const audAddress = '0x05cf62c4ba0ccea3da680f9a8744ac51116d6231';
-const eurAddress = '0x25Fa978ea1a7dc9bDc33a2959B9053EaE57169B5';
-const chfAddress = '0x02d5c618dbc591544b19d0bf13543c0728a3c4ec';
-const gbpAddress = '0x151445852b0cfdf6a4cc81440f2af99176e8ad08';
-const jpyAddress = '0xe1407BfAa6B5965BAd1C9f38316A3b655A09d8A6';
-const xagAddress = '0x8946a183bfafa95becf57c5e08fe5b7654d2807b';
-const xauAddress = '0xafce0c7b7fe3425adb3871eae5c0ec6d93e01935';
+const btcAddress = '0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c';
+const audAddress = '0x77F9710E7d0A19669A13c055F62cd80d313dF022';
+const eurAddress = '0xb49f677943BC038e9857d61E7d053CaA2C1734C1';
+const chfAddress = '0x449d117117838fFA61263B61dA6301AA2a88B13A';
+const gbpAddress = '0x5c0Ab2d9b5a7ed9f470386e82BB36A3613cDd4b5';
+const jpyAddress = '0xBcE206caE7f0ec07b545EddE332A47C2F75bbeb3';
+const xagAddress = '0x379589227b15F1a12195D3f2d90bBc9F31f95235';
+const xauAddress = '0x214eD9Da11D2fbe465a6fc601a91E62EbEc1a0D6';
 const cnyAddress = '0xeF8A4aF35cd47424672E3C590aBD37FBB7A7759a';
 const dpiAddress = '0xD2A593BF7594aCE1faD597adb697b5645d5edDB2';
 
