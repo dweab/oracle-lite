@@ -11,7 +11,8 @@ const constants = require('constants');
 const hostname = '0.0.0.0';
 const port = 443;
 
-const emptyRecord = {"xAG":0,
+const emptyRecord = {
+	"xAG":0,
 	"xAU":0,
 	"xAUD":0,
 	"xBTC":0,
@@ -27,7 +28,8 @@ const emptyRecord = {"xAG":0,
 	"MA1":0,
 	"MA2":0,
 	"MA3":0,
-	"signature":"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"};
+	"signature":"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+};
 
 const dbConfig = {
     host: "localhost",
@@ -35,7 +37,6 @@ const dbConfig = {
     password: "oracle",
     database: "oracle"
 };
-
 
 function initDb( config ) {
     const connection = mysql.createConnection( config );
@@ -51,96 +52,89 @@ function initDb( config ) {
 }
 
 isValidPriceRecord = (priceRecord) => {
-		
-		if (!priceRecord || !priceRecord.value || isNaN(priceRecord.value) || isNaN(parseFloat(priceRecord.value))) {
-			return false;
-		}
-	return true	
-	} 
+	if (!priceRecord || !priceRecord.value || isNaN(priceRecord.value) || isNaN(parseFloat(priceRecord.value))) {
+		return false;
+	}
+	return true;
+}
+
+adjustPrice = (chainRecord) => {
+	let val = Math.pow(10,8) / chainRecord;
+	val *= Math.pow(10,12);
+	val -= val % Math.pow(10,4);
+	return val;
+}
 
 
 getData = async () => {
     try {
-	const chainResponse  = await chainLink.fetchLatestPrice();
+		const chainResponse  = await chainLink.fetchLatestPrice();
 
-	const validResponses = chainResponse
-		.filter(response => response.state === 'fullfilled');
-		
+		const validResponses = chainResponse.filter(response => response.state === 'fullfilled');
 
-
-	// we need usd record to calc other values
+		// we need usd record to calc other values
 		const xUSDRecord = validResponses.find(chainRecord => chainRecord.ticker === 'xUSD');
-		
-	// if xUSD value is not present or not a valid value we cannot update oracles price records
+	
+		// if xUSD value is not present or not a valid value we cannot update oracles price records
 		if (!isValidPriceRecord(xUSDRecord)) {
 			return;
-	}
-
-
-	const priceRecords = validResponses.reduce( (acc, chainRecord)=> {
-
-		if (chainRecord.ticker === "xUSD") {
-			acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
-		}
-		else {
-			acc[chainRecord.ticker] = parseInt(( xUSDRecord.value / chainRecord.value) * Math.pow(10,12));
 		}
 
-		return acc;
+		const priceRecords = validResponses.reduce((acc, chainRecord)=> {
+			if (chainRecord.ticker === 'xUSD') {
+				acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
+			} else {
+				acc[chainRecord.ticker] = adjustPrice(chainRecord.value);
+			}
+			return acc;
+		}, {});
 
-	}, {});
+		const pr_out = {...emptyRecord, ...priceRecords};
+
+		// Store the record in the DB
+		let sql = "INSERT INTO PricingRecord (xAG,xAU,xAUD,xBTC,xCAD,xCHF,xCNY,xEUR,xGBP,xJPY,xNOK,xNZD,xUSD,unused1,unused2,unused3,Signature) VALUES (?)";
+		let values = [[pr_out.xAG, pr_out.xAU, pr_out.xAUD, pr_out.xBTC, pr_out.xCAD, pr_out.xCHF, pr_out.xCNY,
+				pr_out.xEUR, pr_out.xGBP, pr_out.xJPY, pr_out.xNOK, pr_out.xNZD, pr_out.xUSD,
+				pr_out.MA1, pr_out.MA2, pr_out.MA3, pr_out.signature]];
+
+		const db = initDb(dbConfig);
+		try {
+		  const resultInsert = await db.query(sql, values);
+		  sql = "UPDATE PricingRecord SET unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2880) AS ma1), " +
+		    "unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 4320) AS ma2), " +
+		    "unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 8640) AS ma3) WHERE PricingRecordPK=?";
+		  values = [resultInsert.insertId];
+		  const resultUpdate = await db.query(sql, values);
+
+			//Now get the MA values
+			var resultQuery = await db.query("SELECT * FROM PricingRecord WHERE PricingRecordPK=?", values);
+
+			// Erase the empty signature & (superfluous) timestamp
+			delete resultQuery[0].PricingRecordPK;
+			delete resultQuery[0].Signature;
+			delete resultQuery[0].Timestamp;
+
+			console.log("JSON='" + JSON.stringify(resultQuery[0]) + "'");
+			
+			//TODO comment out for regular running
+			//const signature = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+			const signature = sig.getSignature(JSON.stringify(resultQuery[0]));
 		
-		
-
-
-
-	const pr_out = {...emptyRecord, ...priceRecords};
-
-	// Store the record in the DB
-	let sql = "INSERT INTO PricingRecord (xAG,xAU,xAUD,xBTC,xCAD,xCHF,xCNY,xEUR,xGBP,xJPY,xNOK,xNZD,xUSD,unused1,unused2,unused3,Signature) VALUES (?)";
-	let values = [[pr_out.xAG, pr_out.xAU, pr_out.xAUD, pr_out.xBTC, pr_out.xCAD, pr_out.xCHF, pr_out.xCNY,
-		       pr_out.xEUR, pr_out.xGBP, pr_out.xJPY, pr_out.xNOK, pr_out.xNZD, pr_out.xUSD,
-		       pr_out.MA1, pr_out.MA2, pr_out.MA3, pr_out.signature]];
-	const db = initDb(dbConfig);
-	try {
-	  const resultInsert = await db.query(sql, values);
-	  sql = "UPDATE PricingRecord SET unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2880) AS ma1), " +
-	    "unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 4320) AS ma2), " +
-	    "unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 8640) AS ma3) WHERE PricingRecordPK=?";
-	  values = [resultInsert.insertId];
-	  const resultUpdate = await db.query(sql, values);
-
-          // Now get the MA values
-	  var resultQuery = await db.query("SELECT * FROM PricingRecord WHERE PricingRecordPK=?", values);
-
-          // Erase the empty signature & (superfluous) timestamp
-          delete resultQuery[0].PricingRecordPK;
-          delete resultQuery[0].Signature;
-          delete resultQuery[0].Timestamp;
-
-		  console.log("JSON='" + JSON.stringify(resultQuery[0]) + "'");
-		  
-		//TODO comment out for regular running
-		//const signature = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-        const signature = sig.getSignature(JSON.stringify(resultQuery[0]));
-	  
-		console.log(" ... received (sig = " + signature + ")");
-
-          // Update the PR
-          values = [signature, resultInsert.insertId];
-          const resultUpdatePR = await db.query("UPDATE PricingRecord SET Signature=? WHERE PricingRecordPK=?", values);
-          
-	} catch(err) {
-	    // Something went wrong
-	    console.log(err);
-	} finally {
-	    db.close();
-	    return;
-	}
+			console.log(" ... received (sig = " + signature + ")");
+			//Update the PR
+			values = [signature, resultInsert.insertId];
+			const resultUpdatePR = await db.query("UPDATE PricingRecord SET Signature=? WHERE PricingRecordPK=?", values);
+		} catch(err) {
+		    // Something went wrong
+		    console.log(err);
+		} finally {
+		    db.close();
+		    return;
+		}
     } catch (err) {
-	console.log(err);
-	return;
-    }	
+		console.log(err);
+		return;
+    }
 };
 
 const https_options = {
