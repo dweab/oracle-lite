@@ -155,6 +155,10 @@ const server = https.createServer(https_options, (req, res) => {
 	    .then(result => {
 		result[0].signature = result[0].Signature;
 		result[0].timestamp = result[0].UT;
+
+		//disable xbtc record
+		result[0].xBTC = 0;
+
 		delete result[0].Signature;
 		delete result[0].Timestamp;
 		delete result[0].UT;
