@@ -158,7 +158,7 @@ const server = https.createServer(https_options, (req, res) => {
 		result[0].timestamp = result[0].UT;
 
 		// disable btc record
-		result[0].xBTC = 0;
+		result[0].xBTC = result[0].xBTCMA;
 		delete result[0].xBTCMA;
 
 		delete result[0].Signature;
