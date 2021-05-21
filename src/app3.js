@@ -92,17 +92,18 @@ getData = async () => {
 		const pr_out = {...emptyRecord, ...priceRecords};
 
 		// Store the record in the DB
-		let sql = "INSERT INTO PricingRecord (xAG,xAU,xAUD,xBTC,xCAD,xCHF,xCNY,xEUR,xGBP,xJPY,xNOK,xNZD,xUSD,unused1,unused2,unused3,Signature) VALUES (?)";
+		let sql = "INSERT INTO PricingRecord (xAG,xAU,xAUD,xBTC,xCAD,xCHF,xCNY,xEUR,xGBP,xJPY,xNOK,xNZD,xUSD,unused1,unused2,unused3,xBTCMA,Signature) VALUES (?)";
 		let values = [[pr_out.xAG, pr_out.xAU, pr_out.xAUD, pr_out.xBTC, pr_out.xCAD, pr_out.xCHF, pr_out.xCNY,
 				pr_out.xEUR, pr_out.xGBP, pr_out.xJPY, pr_out.xNOK, pr_out.xNZD, pr_out.xUSD,
-				pr_out.MA1, pr_out.MA2, pr_out.MA3, pr_out.signature]];
+				pr_out.MA1, pr_out.MA2, pr_out.MA3, pr_out.xBTC, pr_out.signature]];
 
 		const db = initDb(dbConfig);
 		try {
 		  const resultInsert = await db.query(sql, values);
-		  sql = "UPDATE PricingRecord SET unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2880) AS ma1), " +
-		    "unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 4320) AS ma2), " +
-		    "unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 8640) AS ma3) WHERE PricingRecordPK=?";
+		  sql = "UPDATE PricingRecord SET xBTCMA=(SELECT ((AVG(xBTC) DIV 10000)*10000) FROM (SELECT xBTC FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 120) AS maBTC), " +
+		  "unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2880) AS ma1), " +
+		  "unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 4320) AS ma2), " +
+		  "unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 8640) AS ma3) WHERE PricingRecordPK=?";
 		  values = [resultInsert.insertId];
 		  const resultUpdate = await db.query(sql, values);
 
