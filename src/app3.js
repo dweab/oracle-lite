@@ -115,6 +115,10 @@ getData = async () => {
 			delete resultQuery[0].Signature;
 			delete resultQuery[0].Timestamp;
 
+			// move btc to mv avg
+			resultQuery[0].xBTC = resultQuery[0].xBTCMA;
+			delete resultQuery[0].xBTCMA;
+
 			console.log("JSON='" + JSON.stringify(resultQuery[0]) + "'");
 			
 			//TODO comment out for regular running
@@ -157,7 +161,7 @@ const server = https.createServer(https_options, (req, res) => {
 		result[0].signature = result[0].Signature;
 		result[0].timestamp = result[0].UT;
 
-		// disable btc record
+		// move btc to mv avg
 		result[0].xBTC = result[0].xBTCMA;
 		delete result[0].xBTCMA;
 
