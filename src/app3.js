@@ -51,13 +51,6 @@ function initDb( config ) {
     };
 }
 
-isValidPriceRecord = (priceRecord) => {
-	if (!priceRecord || !priceRecord.value || isNaN(priceRecord.value) || isNaN(parseFloat(priceRecord.value))) {
-		return false;
-	}
-	return true;
-}
-
 adjustPrice = (chainRecord) => {
 	let val = Math.pow(10,8) / chainRecord;
 	val *= Math.pow(10,12);
@@ -71,13 +64,17 @@ getData = async () => {
 		const chainResponse  = await chainLink.fetchLatestPrice();
 
 		const validResponses = chainResponse.filter(response => response.state === 'fullfilled');
-
-		// we need usd record to calc other values
-		const xUSDRecord = validResponses.find(chainRecord => chainRecord.ticker === 'xUSD');
 	
-		// if xUSD value is not present or not a valid value we cannot update oracles price records
-		if (!isValidPriceRecord(xUSDRecord)) {
-			return;
+		// if a record is not present or not a valid value we cannot update oracles price records
+		for (let record of validResponses) {
+			// parseFloat() will return an integer is the value was integer, and a float number if the value
+			// was a float number. Then we can check whether if it is integer or not. If not,
+			// still let the record go into database so that we can see something is wrong.
+			record.value = parseFloat(record.value)
+			if (!Number.isInteger(record.value)) {
+				console.log('Ticker is NOT valid: ', record.ticker, ' val: ', record.value);
+				record.value = 0;
+			}
 		}
 
 		const priceRecords = validResponses.reduce((acc, chainRecord)=> {
@@ -100,10 +97,10 @@ getData = async () => {
 		const db = initDb(dbConfig);
 		try {
 		  const resultInsert = await db.query(sql, values);
-		  sql = "UPDATE PricingRecord SET xBTCMA=(SELECT ((AVG(xBTC) DIV 10000)*10000) FROM (SELECT xBTC FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 120) AS maBTC), " +
-		  "unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 2880) AS ma1), " +
-		  "unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 4320) AS ma2), " +
-		  "unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR ORDER BY PR.PricingRecordPK DESC LIMIT 8640) AS ma3) WHERE PricingRecordPK=?";
+		  sql = "UPDATE PricingRecord SET xBTCMA=(SELECT ((AVG(xBTC) DIV 10000)*10000) FROM (SELECT xBTC FROM PricingRecord PR WHERE xBTC != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 120) AS maBTC), " +
+		  "unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 2880) AS ma1), " +
+		  "unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 4320) AS ma2), " +
+		  "unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 8640) AS ma3) WHERE PricingRecordPK=?";
 		  values = [resultInsert.insertId];
 		  const resultUpdate = await db.query(sql, values);
 
