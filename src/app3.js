@@ -80,8 +80,10 @@ getData = async () => {
 		const priceRecords = validResponses.reduce((acc, chainRecord)=> {
 			if (chainRecord.ticker === 'xUSD') {
 				acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
-			} else {
+			} else if (chainRecord.value != 0) {
 				acc[chainRecord.ticker] = adjustPrice(chainRecord.value);
+			} else {
+				acc[chainRecord.ticker] = 0;
 			}
 			return acc;
 		}, {});
@@ -97,10 +99,11 @@ getData = async () => {
 		const db = initDb(dbConfig);
 		try {
 		  const resultInsert = await db.query(sql, values);
-		  sql = "UPDATE PricingRecord SET xBTCMA=(SELECT ((AVG(xBTC) DIV 10000)*10000) FROM (SELECT xBTC FROM PricingRecord PR WHERE xBTC != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 120) AS maBTC), " +
-		  "unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 2880) AS ma1), " +
-		  "unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 4320) AS ma2), " +
-		  "unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 8640) AS ma3) WHERE PricingRecordPK=?";
+		  sql = "UPDATE PricingRecord SET xBTCMA=(SELECT IFNULL((AVG(xBTC) DIV 10000)*10000, 0) FROM (SELECT xBTC FROM PricingRecord PR WHERE xBTC != 0 AND PR.Timestamp>DATE_SUB(NOW(), INTERVAL 1 HOUR) " +
+			"ORDER BY PR.PricingRecordPK DESC LIMIT 120) AS maBTC), " +
+			"unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 2880) AS ma1), " +
+			"unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 4320) AS ma2), " +
+			"unused3=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 8640) AS ma3) WHERE PricingRecordPK=?";
 		  values = [resultInsert.insertId];
 		  const resultUpdate = await db.query(sql, values);
 
