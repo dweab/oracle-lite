@@ -259,25 +259,11 @@ const server = https.createServer(https_options, async (req, res) => {
 			result[0].xBTC = result[0].xBTCMA;
 			delete result[0].xBTCMA;
 
+			result[0].signature = result[0].Signature;
+		
 			// delete unused values
 			delete result[0].Signature;
 			delete result[0].Timestamp;
-			
-			// don't sign PricingRecordPK, but save it to return in response
-			const PricingRecordPK = result[0].PricingRecordPK;
-			delete result[0].PricingRecordPK;
-
-			// set timestamp based on time of request
-			result[0].timestamp = Math.floor(Date.now() / 1000);
-
-			// sign result and include in response
-			console.log(logRequestPricingRecord(currReqCount), "JSON Result='" + JSON.stringify(result[0]) + "'");
-			const signature = sig.getSignature(JSON.stringify(result[0]));
-			console.log(logRequestPricingRecord(currReqCount), " ... result (sig = " + signature + ")");
-			result[0].signature = signature;
-
-			// reset PricingRecordPK for response
-			result[0].PricingRecordPK = PricingRecordPK;
 
 			response = JSON.stringify({"pr": result[0]});
 			res.writeHead(200, "Content-Type: application/json");
