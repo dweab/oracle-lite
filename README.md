@@ -24,6 +24,7 @@ CREATE TABLE `PricingRecord` (
   `unused1` bigint(20) NOT NULL DEFAULT 0,
   `unused2` bigint(20) NOT NULL DEFAULT 0,
   `unused3` bigint(20) NOT NULL DEFAULT 0,
-  `Signature` char(64) NOT NULL DEFAULT '',
+  `xBTCMA` bigint(20) NOT NULL DEFAULT 0,
+  `Signature` char(128) NOT NULL DEFAULT '',
   PRIMARY KEY (`PricingRecordPK`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
