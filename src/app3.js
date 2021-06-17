@@ -16,6 +16,7 @@ const HF_VERSION_XASSET_FEES_V2 = 17;
 
 const INTERVAL = 30 * 1000; // 30s
 
+const CHAINLINK_REQUEST_TIMEOUT = 15 * 1000 // 15s
 const CHAINLINK_MAX_ALLOWED_DEVIATION_PERCENT = 15;
 const CHAINLINK_MAX_ALLOWED_PRICE_INCREASE = (100 + CHAINLINK_MAX_ALLOWED_DEVIATION_PERCENT) / 100;
 const CHAINLINK_MAX_ALLOWED_PRICE_DECREASE = (100 - CHAINLINK_MAX_ALLOWED_DEVIATION_PERCENT) / 100;
@@ -80,9 +81,29 @@ adjustPrice = (chainRecord) => {
 	return val;
 }
 
+const makeRequest = (request, error, timeout, log) => {
+	return new Promise(async (resolve, reject) => {
+		let timedOut = false;
+		const timer = setTimeout(() => {
+			reject(error);
+			timedOut = true;
+		}, timeout);
+
+		const response = await request();
+		resolve(response);
+		clearTimeout(timer);
+
+		log(response, timedOut);
+	})
+}
+
 const getPriceRecordFromChainlink = async (intervalCount) => {
-	const chainResponse  = await chainLink.fetchLatestPrice();
-	console.log(logUpdatePricingRecord(intervalCount), 'Response from Chainlink: ', chainResponse);
+	const chainResponse  = await makeRequest(
+		() => chainLink.fetchLatestPrice(),
+		'Chainlink request timed out',
+		CHAINLINK_REQUEST_TIMEOUT,
+		(response, timedOut) => console.log(logUpdatePricingRecord(intervalCount), 'Response from Chainlink: ', timedOut ? '(timed out)' : '', response)
+	);
 
 	const validResponses = chainResponse.filter(response => response.state === 'fullfilled');
 
