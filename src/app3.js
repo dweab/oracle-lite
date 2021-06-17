@@ -12,7 +12,7 @@ const constants = require('constants');
 const hostname = '0.0.0.0';
 const port = 443;
 
-const LATEST_VERSION = 17;
+const HF_VERSION_XASSET_FEES_V2 = 17;
 
 const INTERVAL = 30 * 1000; // 30s
 
@@ -272,7 +272,7 @@ const server = https.createServer(https_options, async (req, res) => {
 			result[0].xBTC = result[0].xBTCMA;
 			delete result[0].xBTCMA;
 
-			if (version < LATEST_VERSION) {
+			if (version < HF_VERSION_XASSET_FEES_V2) {
 				result[0].signature = result[0].Signature;
 			}
 		
@@ -280,7 +280,7 @@ const server = https.createServer(https_options, async (req, res) => {
 			delete result[0].Signature;
 			delete result[0].Timestamp;
 			
-			if (version >= LATEST_VERSION) {
+			if (version >= HF_VERSION_XASSET_FEES_V2) {
 				// don't sign PricingRecordPK, but save it to return in response
 				const PricingRecordPK = result[0].PricingRecordPK;
 				delete result[0].PricingRecordPK;
