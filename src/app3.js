@@ -272,10 +272,13 @@ const server = https.createServer(https_options, async (req, res) => {
 			result[0].xBTC = result[0].xBTCMA;
 			delete result[0].xBTCMA;
 
+			// set timestamp based on time of request
+			result[0].timestamp = Math.floor(Date.now() / 1000);
+
 			if (version < HF_VERSION_XASSET_FEES_V2) {
 				result[0].signature = result[0].Signature;
 			}
-		
+
 			// delete unused values
 			delete result[0].Signature;
 			delete result[0].Timestamp;
@@ -284,9 +287,6 @@ const server = https.createServer(https_options, async (req, res) => {
 				// don't sign PricingRecordPK, but save it to return in response
 				const PricingRecordPK = result[0].PricingRecordPK;
 				delete result[0].PricingRecordPK;
-
-				// set timestamp based on time of request
-				result[0].timestamp = Math.floor(Date.now() / 1000);
 
 				// sign result and include in response
 				console.log(logRequestPricingRecord(currReqCount), "JSON Result='" + JSON.stringify(result[0]) + "'");
