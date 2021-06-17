@@ -2,6 +2,7 @@ const fetch = require('node-fetch');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const url = require('url');
 const mysql = require('mysql');
 const util = require('util');
 const chainLink = require('./chainlink');
@@ -10,6 +11,8 @@ const constants = require('constants');
 
 const hostname = '0.0.0.0';
 const port = 443;
+
+const LATEST_VERSION = 17;
 
 const INTERVAL = 30 * 1000; // 30s
 
@@ -241,6 +244,16 @@ const server = https.createServer(https_options, async (req, res) => {
     const currReqCount = reqCount;
     console.log(logRequestPricingRecord(currReqCount), "requesting record...");
 
+	let version;
+	try {
+		const baseURL = 'https://' + req.headers.host + '/';
+		const reqUrl = new URL(req.url, baseURL);
+		version = Number(reqUrl.searchParams.get('version'));
+	} catch {
+		version = 0;
+	}
+	console.log(logRequestPricingRecord(currReqCount), "requesting version", version);
+
     let response;
     const db = initDb(dbConfig);
     try {
@@ -259,11 +272,31 @@ const server = https.createServer(https_options, async (req, res) => {
 			result[0].xBTC = result[0].xBTCMA;
 			delete result[0].xBTCMA;
 
-			result[0].signature = result[0].Signature;
+			if (version < LATEST_VERSION) {
+				result[0].signature = result[0].Signature;
+			}
 		
 			// delete unused values
 			delete result[0].Signature;
 			delete result[0].Timestamp;
+			
+			if (version >= LATEST_VERSION) {
+				// don't sign PricingRecordPK, but save it to return in response
+				const PricingRecordPK = result[0].PricingRecordPK;
+				delete result[0].PricingRecordPK;
+
+				// set timestamp based on time of request
+				result[0].timestamp = Math.floor(Date.now() / 1000);
+
+				// sign result and include in response
+				console.log(logRequestPricingRecord(currReqCount), "JSON Result='" + JSON.stringify(result[0]) + "'");
+				const signature = sig.getSignature(JSON.stringify(result[0]));
+				console.log(logRequestPricingRecord(currReqCount), " ... result (sig = " + signature + ")");
+				result[0].signature = signature;
+
+				// reset PricingRecordPK for response
+				result[0].PricingRecordPK = PricingRecordPK;
+			}
 
 			response = JSON.stringify({"pr": result[0]});
 			res.writeHead(200, "Content-Type: application/json");
