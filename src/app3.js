@@ -89,11 +89,15 @@ const makeRequest = (request, error, timeout, log) => {
 			timedOut = true;
 		}, timeout);
 
-		const response = await request();
-		resolve(response);
-		clearTimeout(timer);
-
-		log(response, timedOut);
+		try {
+			const response = await request();
+			resolve(response);
+			log(response, timedOut);
+		} catch (e) {
+			reject(e);
+		} finally {
+			clearTimeout(timer);
+		}
 	})
 }
 
