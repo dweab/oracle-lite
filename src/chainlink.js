@@ -3,8 +3,8 @@ const Web3 = require('web3');
 
 //const rpcURL = 'https://main-rpc.linkpool.io/';
 //const rpcURL = 'http://localhost:8545';
-const testnetUrl = 'https://ropsten.infura.io/v3/955437c1ed1b44f1a8b4328b787d7e84';
-const mainnetUrl = 'https://mainnet.infura.io/v3/955437c1ed1b44f1a8b4328b787d7e84';
+const testnetUrl = 'https://ropsten.infura.io/v3/6c783d2052f04b9494c3bfa07699a24a';
+const mainnetUrl = 'https://mainnet.infura.io/v3/6c783d2052f04b9494c3bfa07699a24a';
 
 const web3Test = new Web3(testnetUrl);
 const web3Main = new Web3(mainnetUrl);
