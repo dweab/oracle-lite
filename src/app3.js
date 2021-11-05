@@ -126,7 +126,7 @@ const getPriceRecordFromChainlink = async (intervalCount) => {
 	const priceRecords = validResponses.reduce((acc, chainRecord)=> {
 		if (chainRecord.ticker === 'xUSD') {
 			acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
-		} else if (chainRecord.value != 0) {
+		} else if (chainRecord.value != 0 && chainRecord.ticker !== 'xJPY') {
 			acc[chainRecord.ticker] = adjustPrice(chainRecord.value);
 		} else {
 			acc[chainRecord.ticker] = 0;
@@ -140,67 +140,12 @@ const getPriceRecordFromChainlink = async (intervalCount) => {
 	return pr_out;
 }
 
-const getPriceRecordFromCoingecko = async (intervalCount) => {
-	const response = await fetch("https://api.coingecko.com/api/v3/coins/haven");
-	const json = await response.json();
-	var pr = json.market_data.current_price;
-	console.log(logUpdatePricingRecord(intervalCount), 'Response from Coingecko: ', pr);
-	var ATOMIC_UNITS = 100000000000;
-	
-	// leaves out MA's and signature, since not expected to be used later on
-	var pr_out = {
-		"xAG": Number((pr.xag * ATOMIC_UNITS).toFixed(0)),
-		"xAU": Number((pr.xau * ATOMIC_UNITS).toFixed(0)),
-		"xAUD": Number((pr.aud * ATOMIC_UNITS).toFixed(0)),
-		"xBTC": Number((pr.btc * ATOMIC_UNITS).toFixed(0)),
-		"xCAD": Number((pr.cad * ATOMIC_UNITS).toFixed(0)),
-		"xCHF": Number((pr.chf * ATOMIC_UNITS).toFixed(0)),
-		"xCNY": Number((pr.cny * ATOMIC_UNITS).toFixed(0)),
-		"xEUR": Number((pr.eur * ATOMIC_UNITS).toFixed(0)),
-		"xGBP": Number((pr.gbp * ATOMIC_UNITS).toFixed(0)),
-		"xJPY": Number((pr.jpy * ATOMIC_UNITS).toFixed(0)),
-		"xNOK": Number((pr.nok * ATOMIC_UNITS).toFixed(0)),
-		"xNZD": Number((pr.nzd * ATOMIC_UNITS).toFixed(0)),
-
-		// USD price from Coingecko requires separate adjustment to make equivalent to Chainlink adjustment for xUSD
-		"xUSD": Number((pr.usd * ATOMIC_UNITS * 10).toFixed(0)),
-	};
-	console.log(logUpdatePricingRecord(intervalCount), 'Coingecko pr_out: ', pr_out);
-
-	return pr_out;
-}
-
-const sanityCheckChainlinkPrices = (intervalCount, chainlink_pr_out, coingecko_pr_out) => {
-	for (const asset in coingecko_pr_out) {
-		const coingeckoPrice = coingecko_pr_out[asset];
-		const chainlinkPrice = chainlink_pr_out[asset];
-
-		// make sure Chainlink price is not too much higher or lower than Coingecko's
-		if (chainlinkPrice > 0 && coingeckoPrice > 0 && (
-			(chainlinkPrice > coingeckoPrice * CHAINLINK_MAX_ALLOWED_PRICE_INCREASE) ||
-			(chainlinkPrice < coingeckoPrice * CHAINLINK_MAX_ALLOWED_PRICE_DECREASE)
-		)) {
-			console.warn(logUpdatePricingRecord(intervalCount), `Chainlink price for ${asset} deviated too far from Coingecko. Chainlink: ${chainlinkPrice} vs. Coingecko: ${coingeckoPrice}`);
-			chainlink_pr_out[asset] = 0;
-		} else if (chainlinkPrice > 0 && coingeckoPrice <= 0) {
-			console.warn(logUpdatePricingRecord(intervalCount), `Coingekco price for ${asset} is missing.`);
-			chainlink_pr_out[asset] = 0;
-		}
-	}
-	console.log(logUpdatePricingRecord(intervalCount), 'Sanity check complete: ', chainlink_pr_out);
-}
-
 getData = async (intervalCount) => {
     try {
 		// get prices from both Chainlink and Coingecko, and sanity check Chainlink prices against Coingecko
-		const [pr_out, coingecko_pr_out] = await Promise.all([
-			getPriceRecordFromChainlink(intervalCount),
-
-			// secondary price check disabled until we harden the source
-			// getPriceRecordFromCoingecko(intervalCount),
+		const [pr_out] = await Promise.all([
+			getPriceRecordFromChainlink(intervalCount)
 		]);
-
-		// sanityCheckChainlinkPrices(intervalCount, pr_out, coingecko_pr_out);
 
 		// Store the record in the DB
 		let sql = "INSERT INTO PricingRecord (xAG,xAU,xAUD,xBTC,xCAD,xCHF,xCNY,xEUR,xGBP,xJPY,xNOK,xNZD,xUSD,unused1,unused2,unused3,xBTCMA,Signature) VALUES (?)";
