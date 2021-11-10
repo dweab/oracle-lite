@@ -208,7 +208,8 @@ const server = http.createServer(async (req, res) => {
     const currReqCount = reqCount;
     console.log(logRequestPricingRecord(currReqCount), "requesting record...");
 
-	let version;
+	let version = HF_VERSION_XASSET_FEES_V2;
+	/*
 	try {
 		const baseURL = 'https://' + req.headers.host + '/';
 		const reqUrl = new URL(req.url, baseURL);
@@ -216,6 +217,7 @@ const server = http.createServer(async (req, res) => {
 	} catch {
 		version = 0;
 	}
+	*/
 	console.log(logRequestPricingRecord(currReqCount), "requesting version", version);
 
     let response;
