@@ -157,7 +157,7 @@ getData = async (intervalCount) => {
 		try {
 		  await db.beginTransaction();
 		  const resultInsert = await db.query(sql, values);
-		  sql = "UPDATE PricingRecord SET xBTCMA=(SELECT IFNULL((AVG(xBTC) DIV 10000)*10000, 0) FROM (SELECT xBTC FROM PricingRecord PR WHERE xBTC != 0 AND PR.Timestamp>DATE_SUB(NOW(), INTERVAL 30 MIN) " +
+		  sql = "UPDATE PricingRecord SET xBTCMA=(SELECT IFNULL((AVG(xBTC) DIV 10000)*10000, 0) FROM (SELECT xBTC FROM PricingRecord PR WHERE xBTC != 0 AND PR.Timestamp>DATE_SUB(NOW(), INTERVAL 30 MINUTE) " +
 			"ORDER BY PR.PricingRecordPK DESC LIMIT 60) AS maBTC), " +
 			"unused1=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 2880) AS ma1), " +
 			"unused2=(SELECT ((AVG(xUSD) DIV 100000000)*100000000) FROM (SELECT xUSD FROM PricingRecord PR WHERE xUSD != 0 ORDER BY PR.PricingRecordPK DESC LIMIT 4320) AS ma2), " +
