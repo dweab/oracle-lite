@@ -10,7 +10,7 @@ const sig = require('./signature-crypto');
 const constants = require('constants');
 
 const hostname = '127.0.0.1';
-const port = 80;
+const port = 8080;
 
 const HF_VERSION_XASSET_FEES_V2 = 17;
 
@@ -46,9 +46,9 @@ const emptyRecord = {
 };
 
 const dbConfig = {
-    host: "localhost",
-    user: "oracle",
-    password: "oracle",
+    host: "mariadb",
+    user: "root",
+    password: "my-secret-pw",
     database: "oracle"
 };
 
