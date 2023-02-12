@@ -10,7 +10,7 @@ const sig = require('./signature-crypto');
 const constants = require('constants');
 
 const hostname = '127.0.0.1';
-const port = 8080;
+const port = 1080;
 
 const HF_VERSION_XASSET_FEES_V2 = 17;
 
@@ -46,10 +46,10 @@ const emptyRecord = {
 };
 
 const dbConfig = {
-    host: "mariadb",
-    user: "root",
-    password: "my-secret-pw",
-    database: "oracle"
+    host: "localhost",
+    user: "mainnet",
+    password: "mainnet",
+    database: "oraclemainnet"
 };
 
 function initDb( config ) {
@@ -126,7 +126,7 @@ const getPriceRecordFromChainlink = async (intervalCount) => {
 	const priceRecords = validResponses.reduce((acc, chainRecord)=> {
 		if (chainRecord.ticker === 'xUSD') {
 			acc[chainRecord.ticker] = chainRecord.value * Math.pow(10,4);
-		} else if (chainRecord.value != 0 && chainRecord.ticker !== 'xJPY') {
+		} else if (chainRecord.value != 0) {
 			acc[chainRecord.ticker] = adjustPrice(chainRecord.value);
 		} else {
 			acc[chainRecord.ticker] = 0;
